@@ -3,4 +3,5 @@
 /*
 tlc document
 */
-package tlc
+
+package main
