@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 
 	"github.com/Goryudyuma/tlc/tlc"
+	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/yaml.v2"
 )
 
@@ -23,11 +23,12 @@ func loadyaml() tlc.MyTwitterKey {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Print("%v", key)
 	return key
 }
 
 func main() {
 	key := loadyaml()
+	spew.Dump(key)
+	//	fmt.Println(key.AccessToken)
 	tlc.Tlc(key)
 }
