@@ -2,6 +2,7 @@
 package tlc
 
 import (
+	"fmt"
 	"net/url"
 
 	"github.com/Goryudyuma/anaconda"
@@ -42,18 +43,62 @@ func calc(operator byte, one, another []int64) []int64 {
 	return ret
 }
 
-func choiceuseridfromlist(api anaconda.TwitterApi, listname string, owner_screen_name string, owner_id int64, v url.Values) []int64 {
+func choiceuseridfromlist(api anaconda.TwitterApi, listname string, owner_screen_name string, owner_id int64, v url.Values) ([]int64, error) {
 	var ret []int64
 
 	users, err := api.GetListMembersBySlug(listname, owner_screen_name, owner_id, nil)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	for _, user := range users.Users {
 		ret = append(ret, user.Id)
 	}
-	return ret
+	return ret, nil
+}
+
+func calclist(api anaconda.TwitterApi, operator byte,
+	listname1 string, owner_screen_name1 string, owner_id1 int64,
+	listname2 string, owner_screen_name2 string, owner_id2 int64,
+	v url.Values) ([]int64, error) {
+	one, err := choiceuseridfromlist(api, listname1, owner_screen_name1, owner_id1, v)
+	if err != nil {
+		return nil, err
+	}
+	another, err := choiceuseridfromlist(api, listname2, owner_screen_name2, owner_id2, v)
+	if err != nil {
+		return nil, err
+	}
+	ret := calc(operator, one, another)
+	return ret, nil
+}
+
+func mergelist(api anaconda.TwitterApi, operator byte,
+	listname1 string, owner_screen_name1 string, owner_id1 int64,
+	listname2 string, owner_screen_name2 string, owner_id2 int64,
+	resultlistname string,
+	v url.Values) error {
+	resultlist, err := calclist(api, operator,
+		listname1, owner_screen_name1, owner_id1,
+		listname2, owner_screen_name2, owner_id2,
+		v)
+	owner, _ := api.GetSelf(v)
+	prevresultlist, err := choiceuseridfromlist(api, resultlistname, "", owner.Id, v)
+	if err != nil {
+		_, err = api.CreateList(resultlistname, listname1+string(operator)+listname2, v)
+		if err != nil {
+			return err
+		}
+	}
+	removelist := calc('-', prevresultlist, resultlist)
+	for id := range deletelist {
+		api.RemoveMemberFromList(resultlistname, "", id, "", owner.Id, v)
+	}
+	addlist := calc('-', resultlist, prevresultlist)
+	for id := range addlist {
+		//api.AddUserToList()
+	}
+	return err
 }
 
 func Tlc(key MyTwitterKey) {
@@ -62,17 +107,42 @@ func Tlc(key MyTwitterKey) {
 	anaconda.SetConsumerSecret(key.ConsumerSecret)
 	api := anaconda.NewTwitterApi(key.AccessToken, key.AccessTokenSecret)
 
-	users2016 := choiceuseridfromlist(*api, "2016", "Goryudyuma", 0, nil)
-	userstlctest1 := choiceuseridfromlist(*api, "tlctest1", "Goryudyuma", 0, nil)
+	users2016, err := choiceuseridfromlist(*api, "2015", "Goryudyuma", 0, nil)
+	if err != nil {
+		fmt.Print("Not found list")
+		return
+	}
+	userstlctest1, err := choiceuseridfromlist(*api, "tlctest1", "Goryudyuma", 0, nil)
+	if err != nil {
+		fmt.Print("Not found list")
+		return
+	}
 	spew.Dump(users2016)
 	spew.Dump(userstlctest1)
 
 	spew.Dump(calc('+', users2016, userstlctest1))
 	spew.Dump(calc('*', users2016, userstlctest1))
 	spew.Dump(calc('-', users2016, userstlctest1))
+	spew.Dump(calc('-', userstlctest1, users2016))
 
 }
 
+/*
+		lists, _ := api.CreateList("test", "aaa", nil)
+		os.Sleep(10000)
+		fmt.Print("!")
+		spew.Dump(lists)
+		_, err := api.AddUserToList("Goryudyuma", lists.Id, nil)
+		if err != nil {
+			panic(err)
+		}
+
+	_, err := api.RemoveMemberFromList("test4", "Goryudyuma", 0, "Goryudyuma", 0, nil)
+	if err != nil {
+		panic(err)
+	}
+	return
+*/
 /*
 	lists, err := api.GetListsOwnedBy(119667108, nil)
 	if err != nil {
