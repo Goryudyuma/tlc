@@ -91,12 +91,14 @@ func mergelist(api anaconda.TwitterApi, operator byte,
 		}
 	}
 	removelist := calc('-', prevresultlist, resultlist)
-	for id := range deletelist {
-		api.RemoveMemberFromList(resultlistname, "", id, "", owner.Id, v)
+	_, err = api.RemoveUserToListIds(removelist, resultlistname, owner.Id, v)
+	if err != nil {
+		return err
 	}
 	addlist := calc('-', resultlist, prevresultlist)
-	for id := range addlist {
-		//api.AddUserToList()
+	_, err = api.AddUserToListIds(addlist, resultlistname, owner.Id, v)
+	if err != nil {
+		return err
 	}
 	return err
 }
@@ -107,24 +109,28 @@ func Tlc(key MyTwitterKey) {
 	anaconda.SetConsumerSecret(key.ConsumerSecret)
 	api := anaconda.NewTwitterApi(key.AccessToken, key.AccessTokenSecret)
 
-	users2016, err := choiceuseridfromlist(*api, "2015", "Goryudyuma", 0, nil)
+	aaa, err := choiceuseridfromlist(*api, "aaa", "Goryudyuma", 0, nil)
 	if err != nil {
 		fmt.Print("Not found list")
 		return
 	}
-	userstlctest1, err := choiceuseridfromlist(*api, "tlctest1", "Goryudyuma", 0, nil)
+	bbb, err := choiceuseridfromlist(*api, "bbb", "Goryudyuma", 0, nil)
 	if err != nil {
 		fmt.Print("Not found list")
 		return
 	}
-	spew.Dump(users2016)
-	spew.Dump(userstlctest1)
+	spew.Dump(aaa)
+	spew.Dump(bbb)
 
-	spew.Dump(calc('+', users2016, userstlctest1))
-	spew.Dump(calc('*', users2016, userstlctest1))
-	spew.Dump(calc('-', users2016, userstlctest1))
-	spew.Dump(calc('-', userstlctest1, users2016))
+	spew.Dump(calc('+', aaa, bbb))
+	spew.Dump(calc('*', aaa, bbb))
+	spew.Dump(calc('-', aaa, bbb))
+	spew.Dump(calc('-', bbb, aaa))
 
+	err = mergelist(*api, '+', "aaa", "Goryudyuma", 0, "bbb", "Goryudyuma", 0, "ccc", nil)
+	if err != nil {
+		panic(err)
+	}
 }
 
 /*
