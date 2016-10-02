@@ -30,6 +30,11 @@ func main() {
 	key := loadyaml()
 	spew.Dump(key)
 	//	fmt.Println(key.AccessToken)
-	tlc.Tlc(key)
+
+	operator := byte('*')
+	list1 := tlc.List{Listname: "aaa", Owner_screen_name: "Goryudyuma", Owner_id: 0}
+	list2 := tlc.List{Listname: "bbb", Owner_screen_name: "Goryudyuma", Owner_id: 0}
+	resultliststring := "ccc"
+	tlc.Tlc(key, operator, list1, list2, resultliststring)
 
 }
