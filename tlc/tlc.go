@@ -98,17 +98,13 @@ func mergelist(api anaconda.TwitterApi, operator byte,
 	return err
 }
 
-func Tlc(key MyTwitterKey, operator byte, list1 List, list2 List, resultlistname string) error {
+func Tlc(api anaconda.TwitterApi, operator byte, list1 List, list2 List, resultlistname string) error {
 
-	anaconda.SetConsumerKey(key.ConsumerKey)
-	anaconda.SetConsumerSecret(key.ConsumerSecret)
-	api := anaconda.NewTwitterApi(key.AccessToken, key.AccessTokenSecret)
-
-	aaa, err := choiceuseridfromlist(*api, list1, nil)
+	aaa, err := choiceuseridfromlist(api, list1, nil)
 	if err != nil {
 		return errors.New("Not found list " + list1.Listname)
 	}
-	bbb, err := choiceuseridfromlist(*api, list2, nil)
+	bbb, err := choiceuseridfromlist(api, list2, nil)
 	if err != nil {
 		return errors.New("Not found list " + list2.Listname)
 	}
@@ -120,6 +116,6 @@ func Tlc(key MyTwitterKey, operator byte, list1 List, list2 List, resultlistname
 	spew.Dump(calc('-', aaa, bbb))
 	spew.Dump(calc('-', bbb, aaa))
 
-	err = mergelist(*api, operator, list1, list2, resultlistname, nil)
+	err = mergelist(api, operator, list1, list2, resultlistname, nil)
 	return err
 }
