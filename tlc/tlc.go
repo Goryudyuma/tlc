@@ -6,7 +6,7 @@ import (
 	"net/url"
 
 	"github.com/Goryudyuma/anaconda"
-	"github.com/davecgh/go-spew/spew"
+	//	"github.com/davecgh/go-spew/spew"
 	"github.com/deckarep/golang-set"
 )
 
@@ -98,24 +98,35 @@ func mergelist(api anaconda.TwitterApi, operator byte,
 	return err
 }
 
-func Tlc(api anaconda.TwitterApi, operator byte, list1 List, list2 List, resultlistname string) error {
-
-	aaa, err := choiceuseridfromlist(api, list1, nil)
-	if err != nil {
-		return errors.New("Not found list " + list1.Listname)
+func checkapiforlist(apis map[string]anaconda.TwitterApi, list List, v url.Values) ([]int64, error) {
+	for _, api := range apis {
+		result, err := choiceuseridfromlist(api, list, v)
+		if err == nil {
+			return result, nil
+		}
 	}
-	bbb, err := choiceuseridfromlist(api, list2, nil)
-	if err != nil {
-		return errors.New("Not found list " + list2.Listname)
-	}
-	spew.Dump(aaa)
-	spew.Dump(bbb)
+	return nil, errors.New("有効なAPIが見つかりませんでした")
+}
 
-	spew.Dump(calc('+', aaa, bbb))
-	spew.Dump(calc('*', aaa, bbb))
-	spew.Dump(calc('-', aaa, bbb))
-	spew.Dump(calc('-', bbb, aaa))
+func Tlc(apis map[string]anaconda.TwitterApi, operator byte, list1 List, list2 List, result List) error {
+	/*
+		aaa, err := checkapiforlist(apis, list1, nil)
+		if err != nil {
+			return err
+		}
+		bbb, err := checkapiforlist(apis, list2, nil)
+		if err != nil {
+			return err
+		}
 
-	err = mergelist(api, operator, list1, list2, resultlistname, nil)
+			spew.Dump(aaa)
+			spew.Dump(bbb)
+
+			spew.Dump(calc('+', aaa, bbb))
+			spew.Dump(calc('*', aaa, bbb))
+			spew.Dump(calc('-', aaa, bbb))
+			spew.Dump(calc('-', bbb, aaa))
+	*/
+	err := mergelist(apis[result.Owner_screen_name], operator, list1, list2, result.Listname, nil)
 	return err
 }
