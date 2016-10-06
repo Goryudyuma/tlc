@@ -7,7 +7,7 @@ type Config struct {
 }
 
 type List struct {
-	Listname          string
-	Owner_screen_name string
-	Owner_id          int64
+	Listname          string `json:"Listname"`
+	Owner_screen_name string `json:"OwnerScreenName"`
+	Owner_id          int64  `json:"OwnerId"`
 }

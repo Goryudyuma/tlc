@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/Goryudyuma/anaconda"
+	"github.com/davecgh/go-spew/spew"
 	//	"github.com/davecgh/go-spew/spew"
 	"github.com/deckarep/golang-set"
 )
@@ -77,7 +78,15 @@ func mergelist(api anaconda.TwitterApi, operator byte,
 	resultlistname string,
 	v url.Values) error {
 	resultlist, err := calclist(api, operator, list1, list2, v)
-	owner, _ := api.GetSelf(v)
+	if err != nil {
+		spew.Dump("aaa")
+		return err
+	}
+	owner, err := api.GetSelf(v)
+	if err != nil {
+		spew.Dump(err.Error())
+		return err
+	}
 	prevresultlist, err := choiceuseridfromlist(api, List{resultlistname, "", owner.Id}, v)
 	if err != nil {
 		_, err = api.CreateList(resultlistname, list1.Listname+string(operator)+list2.Listname, v)
@@ -108,8 +117,14 @@ func checkapiforlist(apis map[string]anaconda.TwitterApi, list List, v url.Value
 	return nil, errors.New("有効なAPIが見つかりませんでした")
 }
 
+func Tlc(api anaconda.TwitterApi, operator byte, list1 List, list2 List, result List) error {
+	err := mergelist(api, operator, list1, list2, result.Listname, nil)
+	return err
+}
+
+/*
 func Tlc(apis map[string]anaconda.TwitterApi, operator byte, list1 List, list2 List, result List) error {
-	/*
+
 		aaa, err := checkapiforlist(apis, list1, nil)
 		if err != nil {
 			return err
@@ -126,7 +141,9 @@ func Tlc(apis map[string]anaconda.TwitterApi, operator byte, list1 List, list2 L
 			spew.Dump(calc('*', aaa, bbb))
 			spew.Dump(calc('-', aaa, bbb))
 			spew.Dump(calc('-', bbb, aaa))
-	*/
+
 	err := mergelist(apis[result.Owner_screen_name], operator, list1, list2, result.Listname, nil)
 	return err
 }
+
+*/

@@ -1,0 +1,15 @@
+<html>
+<head>
+</head>
+<body>
+<script   src="https://code.jquery.com/jquery-3.1.1.min.js"   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="   crossorigin="anonymous"></script>
+</body>
+<input type="button" onClick="test()">
+<script>
+function test(){
+	$.post("/api/query",{query:
+			'{"Operator":"*","List1":{"Listname":"aaa","OwnerScreenName":"Goryudyuma","OwnerId":0},"List2":{"Listname":"bbb","OwnerScreenName":"Goryudyuma","OwnerId":0},"ResultList":{"Listname":"ddd","OwnerScreenName":"Goryudyuma","OwnerId":0}}'
+	})
+}
+</script>
+</html>

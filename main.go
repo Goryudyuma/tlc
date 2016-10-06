@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
+	"net/http"
+	"sync"
 
 	"github.com/Goryudyuma/anaconda"
 	"github.com/Goryudyuma/tlc/tlc"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/yaml.v2"
@@ -39,6 +41,35 @@ func checklogin(c *gin.Context) bool {
 	return true
 }
 
+type formula struct {
+	Operator   string   `json:"Operator"`
+	List1      tlc.List `json:"List1"`
+	List2      tlc.List `json:"List2"`
+	ResultList tlc.List `json:"ResultList"`
+}
+
+var mutexControl sync.Mutex
+
+func run(c *gin.Context, d formula) error {
+	session := sessions.Default(c)
+	OathToken := session.Get("OathToken").(string)
+	OauthTokenSecret := session.Get("OauthTokenSecret").(string)
+
+	operator := byte(d.Operator[0])
+	list1 := d.List1
+	list2 := d.List2
+	resultlist := d.ResultList
+
+	mutexControl.Lock()
+	defer mutexControl.Unlock()
+
+	api := anaconda.NewTwitterApi(OathToken, OauthTokenSecret)
+	defer api.Close()
+	err := tlc.Tlc(*api, operator, list1, list2, resultlist)
+
+	return err
+}
+
 func main() {
 
 	key := loadyaml()
@@ -56,12 +87,16 @@ func main() {
 	anaconda.SetConsumerSecret(key.ConsumerSecret)
 
 	url, test, err := anaconda.AuthorizationURL("http://localhost:8080/callback")
-	spew.Dump(url)
-	spew.Dump(test)
-	spew.Dump(err)
+	if err != nil {
+		panic(err)
+	}
+	//	spew.Dump(url)
+	//	spew.Dump(test)
+	//	spew.Dump(err)
 	//spew.Dump(anaconda.GetCredentials(test, test.Secret))
 
 	r := gin.Default()
+	r.LoadHTMLGlob("content/*")
 
 	store := sessions.NewCookieStore([]byte(key.SeedString))
 	//store.Options(sessions.Options{Secure: true})
@@ -69,14 +104,16 @@ func main() {
 
 	r.GET("/", func(c *gin.Context) {
 		if !checklogin(c) {
+			c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
 			c.Redirect(301, "/login")
 		}
-		c.String(200, "logined")
+		c.HTML(http.StatusOK, "index.html", gin.H{})
 	})
 	r.GET("/login", func(c *gin.Context) {
 		if checklogin(c) {
 			c.Redirect(301, "/")
 		}
+		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
 		c.Redirect(301, url)
 	})
 	r.GET("/logout", func(c *gin.Context) {
@@ -97,6 +134,8 @@ func main() {
 		session.Set("OathToken", user.Get("oauth_token"))
 		session.Set("OauthTokenSecret", user.Get("oauth_token_secret"))
 		session.Save()
+
+		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
 		c.Redirect(301, "/")
 	})
 	api := r.Group("/api")
@@ -104,8 +143,23 @@ func main() {
 		api.POST("/query", func(c *gin.Context) {
 			if !checklogin(c) {
 				c.String(403, "Not login")
+			} else {
+				query := c.PostForm("query")
+				//spew.Dump(query)
+				var d formula
+				err := json.Unmarshal([]byte(query), &d)
+				if err != nil {
+					c.String(500, err.Error())
+				} else {
+					//spew.Dump(d)
+					err := run(c, d)
+					if err != nil {
+						c.String(500, err.Error())
+					} else {
+						c.String(200, "ok")
+					}
+				}
 			}
-			c.String(200, "queryaaa")
 		})
 	}
 	r.Run()
@@ -124,3 +178,5 @@ func main() {
 
 	c.String(200, a+b)
 */
+
+//{"Operator":"*","List1":{"Listname":"aaa","OwnerScreenName":"Goryudyuma","OwnerId":0},"List2":{"Listname":"bbb","OwnerScreenName":"Goryudyuma","OwnerId":0},"ResultList":{"Listname":"ccc","OwnerScreenName":"Goryudyuma","OwnerId":0}}
