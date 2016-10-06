@@ -1,4 +1,3 @@
 ConsumerKey: your_consumer_key
 ConsumerSecret: your_consumer_secret
-AccessToken: your_access_token
-AccessTokenSecret: your_access_token_secret
+SeedString: random_string
