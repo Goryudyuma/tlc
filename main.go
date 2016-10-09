@@ -70,6 +70,32 @@ func run(c *gin.Context, d formula) error {
 	return err
 }
 
+func searchlists(c *gin.Context, username string) ([]string, error) {
+	session := sessions.Default(c)
+	OathToken := session.Get("OathToken").(string)
+	OauthTokenSecret := session.Get("OauthTokenSecret").(string)
+
+	mutexControl.Lock()
+	defer mutexControl.Unlock()
+
+	api := anaconda.NewTwitterApi(OathToken, OauthTokenSecret)
+	defer api.Close()
+
+	user, err := api.GetUsersShow(username, nil)
+	if err != nil {
+		return nil, err
+	}
+	lists, err := api.GetListsOwnedBy(user.Id, nil)
+	if err != nil {
+		return nil, err
+	}
+	ret := make([]string, len(lists))
+	for i, list := range lists {
+		ret[i] = list.Name
+	}
+	return ret, nil
+}
+
 func main() {
 
 	key := loadyaml()
@@ -157,6 +183,28 @@ func main() {
 						c.String(500, err.Error())
 					} else {
 						c.String(200, "ok")
+					}
+				}
+			}
+		})
+		api.POST("/list", func(c *gin.Context) {
+			if !checklogin(c) {
+				c.String(403, "Not login")
+			} else {
+				username := c.PostForm("username")
+				if username == "" {
+					c.String(500, "username is empty")
+				} else {
+					lists, err := searchlists(c, username)
+					if err != nil {
+						c.String(500, err.Error())
+					} else {
+						data, err := json.Marshal(lists)
+						if err != nil {
+							c.String(500, err.Error())
+						} else {
+							c.String(200, string(data))
+						}
 					}
 				}
 			}
