@@ -76,10 +76,8 @@ func searchlists(c *gin.Context, username string) ([]string, error) {
 	OauthTokenSecret := session.Get("OauthTokenSecret").(string)
 
 	mutexControl.Lock()
-	defer mutexControl.Unlock()
 
 	api := anaconda.NewTwitterApi(OathToken, OauthTokenSecret)
-	defer api.Close()
 
 	user, err := api.GetUsersShow(username, nil)
 	if err != nil {
@@ -89,6 +87,10 @@ func searchlists(c *gin.Context, username string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	api.Close()
+	mutexControl.Unlock()
+
 	ret := make([]string, len(lists))
 	for i, list := range lists {
 		ret[i] = list.Name
@@ -99,15 +101,6 @@ func searchlists(c *gin.Context, username string) ([]string, error) {
 func main() {
 
 	key := loadyaml()
-	//	spew.Dump(key)
-	//	fmt.Println(key.AccessToken)
-
-	/*
-		operator := byte('+')
-		list1 := tlc.List{Listname: "aaa", Owner_screen_name: "Goryudyuma", Owner_id: 0}
-		list2 := tlc.List{Listname: "bbb", Owner_screen_name: "Goryudyuma", Owner_id: 0}
-		resultlist := tlc.List{Listname: "ccc", Owner_screen_name: "umaumakey", Owner_id: 0}
-	*/
 
 	anaconda.SetConsumerKey(key.ConsumerKey)
 	anaconda.SetConsumerSecret(key.ConsumerSecret)
@@ -116,10 +109,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	//	spew.Dump(url)
-	//	spew.Dump(test)
-	//	spew.Dump(err)
-	//spew.Dump(anaconda.GetCredentials(test, test.Secret))
 
 	r := gin.Default()
 	r.LoadHTMLGlob("content/*")
