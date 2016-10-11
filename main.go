@@ -21,8 +21,8 @@ func loadconfig() []byte {
 	return data
 }
 
-func loadyaml() tlc.Config {
-	key := tlc.Config{}
+func loadyaml() Config {
+	key := Config{}
 
 	err := yaml.Unmarshal(loadconfig(), &key)
 	if err != nil {
@@ -120,7 +120,7 @@ func main() {
 	anaconda.SetConsumerKey(key.ConsumerKey)
 	anaconda.SetConsumerSecret(key.ConsumerSecret)
 
-	url, test, err := anaconda.AuthorizationURL("http://localhost:8080/callback")
+	url, test, err := anaconda.AuthorizationURL(key.CallbackURL)
 	if err != nil {
 		panic(err)
 	}
