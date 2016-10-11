@@ -98,6 +98,21 @@ func searchlists(c *gin.Context, username string) ([]string, error) {
 	return ret, nil
 }
 
+func listusers(c *gin.Context, list tlc.List) (anaconda.UserCursor, error) {
+	session := sessions.Default(c)
+	OathToken := session.Get("OathToken").(string)
+	OauthTokenSecret := session.Get("OauthTokenSecret").(string)
+
+	mutexControl.Lock()
+	defer mutexControl.Unlock()
+	api := anaconda.NewTwitterApi(OathToken, OauthTokenSecret)
+	defer api.Close()
+
+	users, err := api.GetListMembersBySlug(list.Listname, list.Owner_screen_name, list.Owner_id, nil)
+	return users, err
+
+}
+
 func main() {
 
 	key := loadyaml()
@@ -197,6 +212,27 @@ func main() {
 					}
 				}
 			}
+		})
+		api.POST("/listusers", func(c *gin.Context) {
+			if !checklogin(c) {
+				c.String(403, "Not login")
+			} else {
+				username := c.PostForm("username")
+				listname := c.PostForm("listname")
+				if username == "" {
+					c.String(500, "username is empty")
+				} else if listname == "" {
+					c.String(500, "listname is empty")
+				} else {
+					users, err := listusers(c, tlc.List{Listname: listname, Owner_screen_name: username})
+					if err != nil {
+						c.String(500, err.Error())
+					} else {
+						c.JSON(200, users)
+					}
+				}
+			}
+
 		})
 	}
 	r.Run()

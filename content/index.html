@@ -6,6 +6,7 @@
 </body>
 <input type="button" onClick="test()">
 <input type="button" onClick="listtest()">
+<input type="button" onClick="listuserstest()">
 <script>
 function test(){
 	$.post("/api/query",{query:
@@ -14,6 +15,9 @@ function test(){
 }
 function listtest(){
 	$.post("/api/list",{username:'Goryudyuma'},(result)=>{console.log(result)});
+}
+function listuserstest(){
+	$.post("/api/listusers",{username:'Goryudyuma',listname:'aaa'},(result)=>{console.log(result)});
 }
 </script>
 </html>
