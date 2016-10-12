@@ -17,6 +17,18 @@ function fetch_user_lists(obj){
 		});
 	}
 }
+function fetch_list_users(obj){
+	var screen_name = $("#" + $(obj).attr('id').replace("select",""));
+	var selector = $(obj);
+	$.post("/api/listusers",{username:screen_name.val(),listname:selector.val()},function(result){
+		var list = $("#" + screen_name.attr("id") + "list");
+		console.log(list.attr("id"));
+		list.empty();
+		for(var i in result.Users){
+			list.append($("<div>").text(result.Users[i].name));
+		}
+	});
+}
 function submit(){
 	var user1 = $("#user1").val();
 	var list1 = $("#user1select option:selected").val();
@@ -27,7 +39,7 @@ function submit(){
 	var list3 = $("#list3").val();
 	$.post("/api/query",{query:
 			'{"Operator":"+","List1":{"Listname":"' + list1 + '","OwnerScreenName":"' + user1 + '","OwnerId":0},"List2":{"Listname":"' + list2 + '","OwnerScreenName":"' + user2 + '","OwnerId":0},"ResultList":{"Listname":"' + list3 + '","OwnerScreenName":"' + user3 + '","OwnerId":0}}'
-	})
+	});
 }
 </script>
 <style>
@@ -59,8 +71,10 @@ footer {
 		<section>
 			<h2>List 1</h2>
 			<input id="user1" type="text" id="screen_name" placeholder="ユーザー名" onkeydown="fetch_user_lists(this);">
-			<select id="user1select" class="list-select">
+			<select id="user1select" class="list-select" onclick="fetch_list_users(this);">
 			</select>
+			<section id="user1list">
+			</section>
 		</section>
 		<section>
 			<h2>Operator</h2>
@@ -73,8 +87,10 @@ footer {
 		<section>
 			<h2>List 2</h2>
 			<input id="user2" type="text" id="screen_name" placeholder="ユーザー名" onkeydown="fetch_user_lists(this);">
-			<select id="user2select" class="list-select">
+			<select id="user2select" class="list-select" onclick="fetch_list_users(this);">
 			</select>
+			<section id="user2list">
+			</section>
 		</section>
 		<section style="text-align:center">
 			<span style="font-size:100px;">⇒</span>
